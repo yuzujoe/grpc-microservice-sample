@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"gihub.com/yuzujoe/grpc-microservice-sample/greet/greetpb"
 	"google.golang.org/grpc"
@@ -9,6 +10,16 @@ import (
 )
 
 type server struct {}
+
+func (*server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb.GreetResponse, error) {
+	fmt.Printf("Greet function was invoked with %v", req)
+	firstName := req.GetGreeting().GetFirstName()
+	result := "Hello " + firstName
+	res := &greetpb.GreetResponse{
+		Result: result,
+	}
+	return res, nil
+}
 
 func main()  {
 	fmt.Println("Hello World")
@@ -19,7 +30,7 @@ func main()  {
 	}
 
 	s := grpc.NewServer()
-	greetpb.RegisterGreetServiceServer(s, server{})
+	greetpb.RegisterGreetServiceServer(s, &server{})
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
