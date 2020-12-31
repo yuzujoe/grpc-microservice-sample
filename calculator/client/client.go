@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gihub.com/yuzujoe/grpc-microservice-sample/calculator/pb"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 )
 
@@ -18,7 +19,9 @@ func main()  {
 	defer conn.Close()
 
 	c := pb.NewCalculatorServiceClient(conn)
-	doCalc(c)
+	//doCalc(c)
+
+	doDecomposition(c)
 }
 
 func doCalc(c pb.CalculatorServiceClient)  {
@@ -35,4 +38,25 @@ func doCalc(c pb.CalculatorServiceClient)  {
 	}
 
 	log.Printf("Response from Calc: %v", res.Result)
+}
+
+func doDecomposition(c pb.CalculatorServiceClient)  {
+	fmt.Println("starting to prime number decomposition")
+	req := &pb.PrimeNumberDecompositionRequest{
+		Number: 120,
+	}
+	res, err := c.Decomposition(context.Background(), req)
+	if err != nil {
+		log.Fatalf("error while calling PrimeNumberDecomposition: %v", err)
+	}
+	for {
+		stream, err := res.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("error while reading stream: %v", err)
+		}
+		log.Printf("Response from Decomposition: %v", stream.GetResult())
+	}
 }

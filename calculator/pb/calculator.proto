@@ -8,6 +8,10 @@ message Calculator {
   int64 sum2 = 2;
 }
 
+message Number {
+  int64 number = 1;
+}
+
 message CalculatorRequest {
   Calculator calculator = 1;
 }
@@ -16,6 +20,16 @@ message CalculatorResponse {
   int64 result = 1;
 }
 
+message PrimeNumberDecompositionRequest {
+  int64 number = 1;
+}
+
+message PrimeNumberDecompositionResponse {
+  int64 result = 1;
+}
+
 service CalculatorService {
   rpc Calc(CalculatorRequest) returns (CalculatorResponse) {};
+
+  rpc Decomposition(PrimeNumberDecompositionRequest) returns (stream PrimeNumberDecompositionResponse) {};
 }

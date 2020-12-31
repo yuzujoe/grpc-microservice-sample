@@ -21,6 +21,24 @@ func (*server) Calc(ctx context.Context, req *pb.CalculatorRequest) (*pb.Calcula
 	return res, nil
 }
 
+func (*server)  Decomposition(req *pb.PrimeNumberDecompositionRequest, stream pb.CalculatorService_DecompositionServer) error {
+	fmt.Println("Decomposition function was invoked with %v", req)
+	number := req.GetNumber()
+	k := int64(2)
+	for number > 1 {
+		if number % k == 0 {
+			stream.Send(&pb.PrimeNumberDecompositionResponse{
+				Result: k,
+			})
+			number = number / k
+			fmt.Println(number)
+		} else {
+			k++
+		}
+	}
+	return nil
+}
+
 func main()  {
 	fmt.Println("Server Started...")
 
