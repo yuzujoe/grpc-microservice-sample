@@ -7,9 +7,10 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"log"
+	"time"
 )
 
-func main()  {
+func main() {
 	fmt.Println("Start Calc...")
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
@@ -20,11 +21,12 @@ func main()  {
 
 	c := pb.NewCalculatorServiceClient(conn)
 	//doCalc(c)
+	//doDecomposition(c)
 
-	doDecomposition(c)
+	doComputeAverage(c)
 }
 
-func doCalc(c pb.CalculatorServiceClient)  {
+func doCalc(c pb.CalculatorServiceClient) {
 	fmt.Println("starting to calc RPC...")
 	req := &pb.CalculatorRequest{
 		Calculator: &pb.Calculator{
@@ -40,7 +42,7 @@ func doCalc(c pb.CalculatorServiceClient)  {
 	log.Printf("Response from Calc: %v", res.Result)
 }
 
-func doDecomposition(c pb.CalculatorServiceClient)  {
+func doDecomposition(c pb.CalculatorServiceClient) {
 	fmt.Println("starting to prime number decomposition")
 	req := &pb.PrimeNumberDecompositionRequest{
 		Number: 120,
@@ -59,4 +61,37 @@ func doDecomposition(c pb.CalculatorServiceClient)  {
 		}
 		log.Printf("Response from Decomposition: %v", stream.GetResult())
 	}
+}
+
+func doComputeAverage(c pb.CalculatorServiceClient) {
+	request := []*pb.ComputeAverageRequest{
+		{
+			Number: 1,
+		},
+		{
+			Number: 2,
+		},
+		{
+			Number: 3,
+		},
+		{
+			Number: 4,
+		},
+	}
+
+	stream, err := c.ComputeAverage(context.Background())
+	if err != nil {
+		log.Fatalf("Error while reading stream: %v", err)
+	}
+
+	for _, req := range request {
+		stream.Send(req)
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error while receving response from ComputeAcerage: %v", err)
+	}
+	fmt.Printf("ComputeAvarage Response: %v", res)
 }

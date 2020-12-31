@@ -9,7 +9,7 @@ import (
 	"net"
 )
 
-type server struct {}
+type server struct{}
 
 func (*server) Calc(ctx context.Context, req *pb.CalculatorRequest) (*pb.CalculatorResponse, error) {
 	fmt.Println("Calculator function was invoked with %v", req)
@@ -21,12 +21,12 @@ func (*server) Calc(ctx context.Context, req *pb.CalculatorRequest) (*pb.Calcula
 	return res, nil
 }
 
-func (*server)  Decomposition(req *pb.PrimeNumberDecompositionRequest, stream pb.CalculatorService_DecompositionServer) error {
+func (*server) Decomposition(req *pb.PrimeNumberDecompositionRequest, stream pb.CalculatorService_DecompositionServer) error {
 	fmt.Println("Decomposition function was invoked with %v", req)
 	number := req.GetNumber()
 	k := int64(2)
 	for number > 1 {
-		if number % k == 0 {
+		if number%k == 0 {
 			stream.Send(&pb.PrimeNumberDecompositionResponse{
 				Result: k,
 			})
@@ -39,7 +39,27 @@ func (*server)  Decomposition(req *pb.PrimeNumberDecompositionRequest, stream pb
 	return nil
 }
 
-func main()  {
+func (*server) ComputeAverage(stream pb.CalculatorService_ComputeAverageServer) error {
+	sum := int64(0)
+	count := 0
+	for {
+		req, err := stream.Recv()
+		if err != nil {
+			result := float64(sum) / float64(count)
+			return stream.SendAndClose(&pb.ComputeAverageResponse{
+				Result: result,
+			})
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+		}
+		sum += req.GetNumber()
+		count++
+	}
+	return nil
+}
+
+func main() {
 	fmt.Println("Server Started...")
 
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
