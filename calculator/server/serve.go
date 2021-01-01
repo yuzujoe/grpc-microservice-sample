@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gihub.com/yuzujoe/grpc-microservice-sample/calculator/pb"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 	"net"
 )
@@ -55,6 +56,33 @@ func (*server) ComputeAverage(stream pb.CalculatorService_ComputeAverageServer) 
 		}
 		sum += req.GetNumber()
 		count++
+	}
+	return nil
+}
+
+func (*server) FindMaximum(stream pb.CalculatorService_FindMaximumServer) error {
+	fmt.Printf("FindMaximum function was invoked with a streaming request\n")
+	maximum := int64(0)
+	for  {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error while reding client stream: %v", err)
+			return err
+		}
+		number := req.GetNumber()
+		if number > maximum {
+			maximum = number
+			err := stream.Send(&pb.FindMaximumResponse{
+				Result: maximum,
+			})
+			if err != nil {
+				log.Fatal("Error while sending data to client: %v", err)
+				return err
+			}
+		}
 	}
 	return nil
 }

@@ -23,7 +23,8 @@ func main() {
 	//doCalc(c)
 	//doDecomposition(c)
 
-	doComputeAverage(c)
+	//doComputeAverage(c)
+	doFindMaximum(c)
 }
 
 func doCalc(c pb.CalculatorServiceClient) {
@@ -94,4 +95,59 @@ func doComputeAverage(c pb.CalculatorServiceClient) {
 		log.Fatalf("Error while receving response from ComputeAcerage: %v", err)
 	}
 	fmt.Printf("ComputeAvarage Response: %v", res)
+}
+
+func doFindMaximum(c pb.CalculatorServiceClient)  {
+	request := []*pb.FindMaximumRequest{
+		{
+			Number: 1,
+		},
+		{
+			Number: 5,
+		},
+		{
+			Number: 3,
+		},
+		{
+			Number: 6,
+		},
+		{
+			Number: 2,
+		},
+		{
+			Number: 20,
+		},
+	}
+
+	stream, err := c.FindMaximum(context.Background())
+	if err != nil {
+		log.Fatal("Error while opening stream and calling FindMaximum: %v", err)
+		return
+	}
+
+	waitc := make(chan struct{})
+	go func() {
+		for _, req := range request {
+			fmt.Printf("Sending message: %v\n", req)
+			stream.Send(req)
+			time.Sleep(1000 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+
+	go func() {
+		for  {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while receving: %v", err)
+				break
+			}
+			fmt.Printf("Received: %v\n", res.GetResult())
+		}
+		close(waitc)
+	}()
+	<-waitc
 }
