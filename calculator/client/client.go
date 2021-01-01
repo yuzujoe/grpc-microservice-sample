@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"gihub.com/yuzujoe/grpc-microservice-sample/calculator/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"io"
 	"log"
 	"time"
@@ -24,7 +26,9 @@ func main() {
 	//doDecomposition(c)
 
 	//doComputeAverage(c)
-	doFindMaximum(c)
+	//doFindMaximum(c)
+
+	doErrorUnary(c)
 }
 
 func doCalc(c pb.CalculatorServiceClient) {
@@ -150,4 +154,36 @@ func doFindMaximum(c pb.CalculatorServiceClient)  {
 		close(waitc)
 	}()
 	<-waitc
+}
+
+func doErrorUnary(c pb.CalculatorServiceClient) {
+	fmt.Println("Starting to do a SquareRoot Unary RPC...")
+
+	// correct call
+	doErrorCall(c, 10)
+
+	// error call
+	doErrorCall(c, -2)
+}
+
+func doErrorCall(c pb.CalculatorServiceClient, n int32)  {
+	res, err := c.SquareRoot(context.Background(), &pb.SquareRootRequest{
+		Number: n,
+	})
+	if err != nil {
+		respErr, ok :=status.FromError(err)
+		if ok {
+			// actual error from gRPC (user error)
+			fmt.Println(respErr.Message())
+			fmt.Println(respErr.Code())
+			if respErr.Code() == codes.InvalidArgument {
+				fmt.Println("We probably sent a negative number!")
+			}
+			return
+		} else {
+			log.Fatal("Big Error calling SquareRoot: %v", err)
+			return
+		}
+	}
+	fmt.Printf("Result of square root of %v: %v\n", n, res.GetNumberRoot())
 }

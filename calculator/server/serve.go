@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"gihub.com/yuzujoe/grpc-microservice-sample/calculator/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"io"
 	"log"
+	"math"
 	"net"
 )
 
@@ -85,6 +88,20 @@ func (*server) FindMaximum(stream pb.CalculatorService_FindMaximumServer) error 
 		}
 	}
 	return nil
+}
+
+func (*server) SquareRoot(ctx context.Context, req *pb.SquareRootRequest) (*pb.SquareRootResponse, error)  {
+ 	fmt.Println("Received SquareRoot RPC")
+	number := req.GetNumber()
+	if number < 0 {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("Received a negative number %v", number),
+		)
+	}
+	return &pb.SquareRootResponse{
+		NumberRoot: math.Sqrt(float64(number)),
+	}, nil
 }
 
 func main() {
