@@ -24,19 +24,19 @@ type item struct{}
 
 type blogItem struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty"`
-	AutherID string `bson:"author_id"`
-	Content  string `bson:"content"`
-	Title    string `bson:"title"`
+	AutherID string             `bson:"author_id"`
+	Content  string             `bson:"content"`
+	Title    string             `bson:"title"`
 }
 
-func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*blogpb.CreateBlogResponse, error)  {
+func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*blogpb.CreateBlogResponse, error) {
 
 	blog := req.GetBlog()
 
 	data := blogItem{
 		AutherID: blog.GetAuthorId(),
-		Title: blog.GetTitle(),
-		Content: blog.GetContent(),
+		Title:    blog.GetTitle(),
+		Content:  blog.GetContent(),
 	}
 
 	res, err := collection.InsertOne(context.Background(), data)
@@ -47,7 +47,7 @@ func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*
 		)
 	}
 	oid, ok := res.InsertedID.(primitive.ObjectID)
-	if !ok  {
+	if !ok {
 		return nil, status.Errorf(
 			codes.Internal,
 			fmt.Sprintf("Cannot convert to OID: %v", err),
@@ -55,10 +55,10 @@ func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*
 	}
 	return &blogpb.CreateBlogResponse{
 		Blog: &blogpb.Blog{
-			Id: oid.Hex(),
-			Title: blog.GetAuthorId(),
+			Id:       oid.Hex(),
+			Title:    blog.GetAuthorId(),
 			AuthorId: blog.GetAuthorId(),
-			Content: blog.GetContent(),
+			Content:  blog.GetContent(),
 		},
 	}, nil
 }
@@ -74,7 +74,7 @@ func main() {
 		log.Fatalf("Failed to listern: %v", err)
 	}
 
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://foo:bar@localhost:27017"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatal(err)
 	}
