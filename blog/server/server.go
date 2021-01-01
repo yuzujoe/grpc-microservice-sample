@@ -8,6 +8,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log"
 	"net"
 	"os"
@@ -25,6 +27,40 @@ type blogItem struct {
 	AutherID string `bson:"author_id"`
 	Content  string `bson:"content"`
 	Title    string `bson:"title"`
+}
+
+func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*blogpb.CreateBlogResponse, error)  {
+
+	blog := req.GetBlog()
+
+	data := blogItem{
+		AutherID: blog.GetAuthorId(),
+		Title: blog.GetTitle(),
+		Content: blog.GetContent(),
+	}
+
+	res, err := collection.InsertOne(context.Background(), data)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Internal Error: %v", err),
+		)
+	}
+	oid, ok := res.InsertedID.(primitive.ObjectID)
+	if !ok  {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot convert to OID: %v", err),
+		)
+	}
+	return &blogpb.CreateBlogResponse{
+		Blog: &blogpb.Blog{
+			Id: oid.Hex(),
+			Title: blog.GetAuthorId(),
+			AuthorId: blog.GetAuthorId(),
+			Content: blog.GetContent(),
+		},
+	}, nil
 }
 
 func main() {
